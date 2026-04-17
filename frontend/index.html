@@ -4,18 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>War Economy Correlation Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 </head>
 <body>
   <main class="page">
     <header class="hero">
-      <h1>War Economy Correlation Dashboard</h1>
-      <p>Examine how defense stock movement aligns with conflict start, progression, and end milestones, filtered by US involvement and region.</p>
+      <span class="eyebrow hero-eyebrow">Conflict Intelligence</span>
+      <h1 class="hero-headline">War Economy <em>Correlation</em> Dashboard</h1>
+      <p class="hero-sub">Examine how defense stock movement aligns with conflict start, progression, and end milestones, filtered by US involvement and region.</p>
     </header>
 
     <section class="layout">
       <aside class="panel controls">
+        <span class="eyebrow">Control Deck</span>
         <h2>Controls</h2>
 
         <label>Companies</label>
@@ -64,6 +69,7 @@
       </aside>
 
       <section class="panel chart-panel">
+        <span class="eyebrow">Timeline View</span>
         <h2>Timeline Correlation</h2>
         <div id="chart" class="chart"></div>
       </section>
@@ -71,11 +77,13 @@
 
     <section class="layout secondary">
       <section class="panel">
+        <span class="eyebrow">Overlay Key</span>
         <h2>Conflict Overlay Legend</h2>
         <div id="legend"></div>
       </section>
 
       <section class="panel">
+        <span class="eyebrow">Method Notes</span>
         <h2>Methodology and Interpretation</h2>
         <div class="methodology">
           <p>This analysis is correlation-focused and tracks stock movement around conflict lifecycle milestones.</p>
@@ -91,22 +99,26 @@
 
     <section class="layout secondary">
       <section class="panel">
+        <span class="eyebrow">Focused Reads</span>
         <h2>Conflict-Centered Insight Cards</h2>
         <div id="insightCards" class="cards"></div>
       </section>
 
       <section class="panel">
+        <span class="eyebrow">US Split</span>
         <h2>Direct vs Indirect Comparison</h2>
         <div id="comparison" class="comparison"></div>
       </section>
     </section>
 
     <section class="panel">
+      <span class="eyebrow">Source Audit</span>
       <h2>Provenance and Limitations</h2>
       <div id="provenance" class="provenance"></div>
     </section>
 
     <section class="panel">
+      <span class="eyebrow">Data Pulse</span>
       <h2>Correlation Snapshot</h2>
       <pre id="snapshot"></pre>
     </section>
