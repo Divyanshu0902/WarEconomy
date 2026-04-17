@@ -18,6 +18,7 @@ const state = {
 };
 
 let chart;
+let applyButtonLabel = "Apply Filters";
 
 async function fetchJson(path) {
   const res = await fetch(`${API_BASE}${path}`);
@@ -33,6 +34,10 @@ function show(id, payload) {
 
 async function init() {
   chart = echarts.init(document.getElementById("chart"));
+  const applyBtn = document.getElementById("applyBtn");
+  if (applyBtn) {
+    applyButtonLabel = applyBtn.textContent || applyButtonLabel;
+  }
 
   const base = await fetchJson("/api/metadata");
   state.metadata = base;
@@ -56,6 +61,21 @@ async function init() {
   wireEvents();
   applyPreset("10Y");
   await refreshDashboard();
+}
+
+function setLoading(isLoading) {
+  const chartEl = document.getElementById("chart");
+  const applyBtn = document.getElementById("applyBtn");
+
+  document.body.classList.toggle("is-loading", isLoading);
+  if (chartEl) {
+    chartEl.classList.toggle("shimmer", isLoading);
+  }
+
+  if (applyBtn) {
+    applyBtn.disabled = isLoading;
+    applyBtn.textContent = isLoading ? "Loading..." : applyButtonLabel;
+  }
 }
 
 function wireEvents() {
@@ -179,28 +199,33 @@ async function refreshDashboard() {
     endDate
   });
 
-  const [seriesRes, conflictsRes, summaryRes, insightsRes] = await Promise.all([
-    fetchJson(`/api/timeseries?${timeQuery.toString()}`),
-    fetchJson(`/api/conflicts?${conflictQuery.toString()}`),
-    fetchJson(`/api/analytics/summary?ticker=${encodeURIComponent(tickers[0])}`),
-    fetchJson(`/api/insights?ticker=${encodeURIComponent(tickers[0])}&${conflictQuery.toString()}`)
-  ]);
+  setLoading(true);
+  try {
+    const [seriesRes, conflictsRes, summaryRes, insightsRes] = await Promise.all([
+      fetchJson(`/api/timeseries?${timeQuery.toString()}`),
+      fetchJson(`/api/conflicts?${conflictQuery.toString()}`),
+      fetchJson(`/api/analytics/summary?ticker=${encodeURIComponent(tickers[0])}`),
+      fetchJson(`/api/insights?ticker=${encodeURIComponent(tickers[0])}&${conflictQuery.toString()}`)
+    ]);
 
-  state.conflicts = conflictsRes.conflicts || [];
-  renderLegend(state.conflicts);
-  renderChart(seriesRes.series || [], state.conflicts, { mode });
-  renderInsightCards(insightsRes.cards || []);
-  renderComparison(insightsRes.comparison || null);
+    state.conflicts = conflictsRes.conflicts || [];
+    renderLegend(state.conflicts);
+    renderChart(seriesRes.series || [], state.conflicts, { mode });
+    renderInsightCards(insightsRes.cards || []);
+    renderComparison(insightsRes.comparison || null);
 
-  show("snapshot", {
-    selectedTickers: tickers,
-    mode,
-    granularity,
-    range: { startDate, endDate },
-    conflictCount: state.conflicts.length,
-    summaryForPrimaryTicker: summaryRes,
-    insightCardCount: (insightsRes.cards || []).length
-  });
+    show("snapshot", {
+      selectedTickers: tickers,
+      mode,
+      granularity,
+      range: { startDate, endDate },
+      conflictCount: state.conflicts.length,
+      summaryForPrimaryTicker: summaryRes,
+      insightCardCount: (insightsRes.cards || []).length
+    });
+  } finally {
+    setLoading(false);
+  }
 }
 
 function renderChart(seriesRows, conflicts, options) {
@@ -217,7 +242,7 @@ function renderChart(seriesRows, conflicts, options) {
   const first = lineSeries[0];
   if (first) {
     first.markArea = {
-      itemStyle: { color: "rgba(176, 67, 36, 0.08)" },
+      itemStyle: { color: "rgba(201, 147, 58, 0.08)" },
       data: conflicts.map((c) => [
         { name: c.name, xAxis: c.startDate },
         { xAxis: c.endDate || new Date().toISOString().slice(0, 10) }
@@ -226,7 +251,7 @@ function renderChart(seriesRows, conflicts, options) {
 
     first.markLine = {
       symbol: ["none", "none"],
-      lineStyle: { type: "dashed", color: "rgba(100, 60, 25, 0.6)", width: 1 },
+      lineStyle: { type: "dashed", color: "rgba(201, 147, 58, 0.55)", width: 1 },
       label: { show: false },
       data: conflicts.flatMap((c) => (c.milestones || []).map((m) => ({ xAxis: m.date })) )
     };
@@ -234,11 +259,23 @@ function renderChart(seriesRows, conflicts, options) {
 
   chart.setOption({
     animationDuration: 500,
+    textStyle: {
+      color: "#fafaf8"
+    },
     tooltip: {
-      trigger: "axis"
+      trigger: "axis",
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.08)",
+      backgroundColor: "rgba(10, 11, 15, 0.94)",
+      textStyle: {
+        color: "#f5f0e8"
+      }
     },
     legend: {
-      top: 8
+      top: 8,
+      textStyle: {
+        color: "#8b8fa8"
+      }
     },
     grid: {
       left: 55,
@@ -247,15 +284,51 @@ function renderChart(seriesRows, conflicts, options) {
       bottom: 60
     },
     xAxis: {
-      type: "time"
+      type: "time",
+      axisLine: {
+        lineStyle: { color: "rgba(255,255,255,0.2)" }
+      },
+      axisLabel: {
+        color: "#8b8fa8"
+      },
+      splitLine: {
+        lineStyle: {
+          color: "rgba(255,255,255,0.05)"
+        }
+      }
     },
     yAxis: {
       type: "value",
-      name: options.mode === "indexed" ? "Indexed (Base=100)" : "Price"
+      name: options.mode === "indexed" ? "Indexed (Base=100)" : "Price",
+      nameTextStyle: {
+        color: "#8b8fa8"
+      },
+      axisLine: {
+        lineStyle: { color: "rgba(255,255,255,0.2)" }
+      },
+      axisLabel: {
+        color: "#8b8fa8"
+      },
+      splitLine: {
+        lineStyle: {
+          color: "rgba(255,255,255,0.05)"
+        }
+      }
     },
     dataZoom: [
       { type: "inside" },
-      { type: "slider", bottom: 15 }
+      {
+        type: "slider",
+        bottom: 15,
+        borderColor: "rgba(255,255,255,0.08)",
+        fillerColor: "rgba(201,147,58,0.17)",
+        backgroundColor: "rgba(255,255,255,0.03)",
+        textStyle: { color: "#8b8fa8" },
+        handleStyle: {
+          color: "#c9933a",
+          borderColor: "#c9933a"
+        }
+      }
     ],
     series: lineSeries
   });
