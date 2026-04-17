@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>War Economy Correlation Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Skip to dashboard content</a>
+  <div id="liveStatus" class="sr-only" role="status" aria-live="polite"></div>
+
+  <main id="mainContent" class="page">
+    <header class="hero">
+      <span class="eyebrow hero-eyebrow">Conflict Intelligence</span>
+      <h1 class="hero-headline">War Economy <em>Correlation</em> Dashboard</h1>
+      <p class="hero-sub">Examine how defense stock movement aligns with conflict start, progression, and end milestones, filtered by US involvement and region.</p>
+    </header>
+
+    <section class="layout">
+      <aside class="panel controls">
+        <span class="eyebrow">Control Deck</span>
+        <h2>Controls</h2>
+
+        <label id="companiesLabel">Companies</label>
+        <div id="companyList" class="chip-list"></div>
+
+        <label for="mode">Mode</label>
+        <select id="mode">
+          <option value="absolute">Absolute Price</option>
+          <option value="indexed">Indexed (Base=100)</option>
+        </select>
+
+        <label for="granularity">Granularity</label>
+        <select id="granularity">
+          <option value="day">Day</option>
+          <option value="week">Week</option>
+          <option value="month" selected>Month</option>
+          <option value="year">Year</option>
+          <option value="decade">Decade</option>
+        </select>
+
+        <label id="presetLabel">Time Preset</label>
+        <div id="presets" class="preset-grid"></div>
+
+        <label for="startDate">Custom Start</label>
+        <input type="date" id="startDate" />
+
+        <label for="endDate">Custom End</label>
+        <input type="date" id="endDate" />
+
+        <label for="involvement">US Involvement</label>
+        <select id="involvement">
+          <option value="">All</option>
+          <option value="direct">Direct</option>
+          <option value="indirect">Indirect</option>
+          <option value="coalition">Coalition</option>
+          <option value="advisory">Advisory</option>
+          <option value="proxy">Proxy</option>
+        </select>
+
+        <label for="region">Region</label>
+        <select id="region">
+          <option value="">All</option>
+        </select>
+
+        <button id="applyBtn" class="primary">Apply Filters</button>
+      </aside>
+
+      <section class="panel chart-panel">
+        <span class="eyebrow">Timeline View</span>
+        <h2>Timeline Correlation</h2>
+        <div id="activeFilters" class="active-filters" aria-live="polite"></div>
+        <div id="chart" class="chart" role="img" aria-label="Time series chart for selected defense companies with conflict overlays"></div>
+      </section>
+    </section>
+
+    <section class="layout secondary">
+      <section class="panel">
+        <span class="eyebrow">Overlay Key</span>
+        <h2>Conflict Overlay Legend</h2>
+        <div class="legend-toolbar">
+          <div id="legendSummary" class="legend-summary" aria-live="polite"></div>
+          <button id="legendToggle" class="legend-toggle" type="button" aria-expanded="false">Show More</button>
+        </div>
+        <div id="legend"></div>
+      </section>
+
+      <section class="panel">
+        <span class="eyebrow">Method Notes</span>
+        <h2>Methodology and Interpretation</h2>
+        <div class="methodology">
+          <p>This analysis is correlation-focused and tracks stock movement around conflict lifecycle milestones.</p>
+          <ul>
+            <li>Lifecycle stages: start, progression, end</li>
+            <li>Modes: absolute price or indexed baseline</li>
+            <li>Filters: US involvement and region</li>
+          </ul>
+          <p class="warning">Correlation is not causation. Market-wide shocks, source timing differences, and survivorship bias may influence observed patterns.</p>
+        </div>
+      </section>
+    </section>
+
+    <section class="layout secondary">
+      <section class="panel">
+        <span class="eyebrow">Focused Reads</span>
+        <h2>Conflict-Centered Insight Cards</h2>
+        <div id="insightCards" class="cards"></div>
+      </section>
+
+      <section class="panel">
+        <span class="eyebrow">US Split</span>
+        <h2>Direct vs Indirect Comparison</h2>
+        <div id="comparison" class="comparison"></div>
+      </section>
+    </section>
+
+    <section class="panel">
+      <span class="eyebrow">Source Audit</span>
+      <h2>Provenance and Limitations</h2>
+      <div id="provenance" class="provenance"></div>
+    </section>
+
+    <section class="panel">
+      <span class="eyebrow">Data Pulse</span>
+      <h2>Correlation Snapshot</h2>
+      <pre id="snapshot"></pre>
+    </section>
+  </main>
+
+  <script src="assets/app.js" type="module"></script>
+</body>
+</html>
