@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="stylesheet" href="assets/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 </head>
 <body>
@@ -74,6 +74,7 @@
       <section class="panel chart-panel">
         <span class="eyebrow">Timeline View</span>
         <h2>Timeline Correlation</h2>
+        <div id="activeFilters" class="active-filters" aria-live="polite"></div>
         <div id="chart" class="chart" role="img" aria-label="Time series chart for selected defense companies with conflict overlays"></div>
       </section>
     </section>
@@ -131,6 +132,6 @@
     </section>
   </main>
 
-  <script src="/assets/app.js" type="module"></script>
+  <script src="assets/app.js" type="module"></script>
 </body>
 </html>

@@ -1,29 +1,29 @@
-# War Economy (Backend-First MVP)
+# War Economy Dashboard
 
-This project is currently implemented with a backend-first approach so the data pipeline and analytics operations are verified before UI design.
+War Economy is a conflict-lifecycle correlation dashboard for exploring how defense company price movement aligns with conflict start/progression/end milestones.
 
-## What is implemented now
+## Project status
 
-- JavaScript-only codebase
-- Raw data ingestion from `data/raw/*.json`
-- Optional CSV imports from `data/import/*.csv`
-- Schema validation for companies, price points, conflicts, and milestones
-- Correlation-focused analytics around conflict lifecycle stages:
-  - start
-  - progression
-  - end
-- US involvement classification support:
-  - direct
-  - indirect
-  - coalition
-  - advisory
-  - proxy
-- Processed dataset output at `data/processed/analytics.json`
-- Data quality report output at `data/processed/quality-report.json`
-- HTTP API for querying conflicts and company analytics
-- Full frontend dashboard served by backend for timeline correlation exploration
+1. Milestone C (dashboard core): complete
+2. Milestone D (interpretation layer): complete
+3. Milestone E (UI polish): complete
+4. Milestone F (deployment wrap-up): complete
+5. Milestone A (real historical continuity): deferred and tracked in `MILESTONE_A_BLOCKER_LOG.md`
 
-## Quick start
+## Features
+
+- Data pipeline and schema validation
+- Correlation analytics around conflict lifecycle stages
+- API mode (backend + frontend)
+- Static mode (frontend fallback using exported `analytics.json`)
+- Responsive polished dashboard with:
+  - company controls
+  - overlay legend + density toggle
+  - interpretation cards
+  - direct-vs-indirect comparison
+  - provenance and caution framing
+
+## Quick start (API mode)
 
 1. Build analytics dataset:
 
@@ -31,30 +31,65 @@ This project is currently implemented with a backend-first approach so the data 
    npm run pipeline
    ```
 
-2. (Optional) Add historical CSV files into `data/import/` before running pipeline.
-
-3. Build quality report (same pipeline command, explicit alias):
-
-   ```bash
-   npm run quality
-   ```
-
-4. Start backend API (also serves minimal frontend harness):
+2. Start backend API:
 
    ```bash
    npm run start:api
    ```
 
-5. Open in browser:
+3. Open:
 
-   - `http://localhost:8080/` (minimal frontend harness)
+   - `http://localhost:8080/`
    - `http://localhost:8080/health`
 
-6. Run integration checks:
+## Verification commands
+
+- Full verification + static export:
+
+  ```bash
+  npm run verify:all
+  ```
+
+- Deploy preparation path:
+
+  ```bash
+  npm run deploy:prep
+  ```
+
+## Static export (GitHub Pages target)
+
+1. Build dataset:
 
    ```bash
-   npm run test:integration
+   npm run pipeline
    ```
+
+2. Export static site:
+
+   ```bash
+   npm run export:static
+   ```
+
+3. Deploy the generated artifact:
+
+   - path: `dist/static`
+   - includes:
+     - `index.html`
+     - `assets/styles.css`
+     - `assets/app.js`
+     - `data/analytics.json`
+     - `.nojekyll`
+
+## GitHub Pages automation
+
+- Workflow file: `.github/workflows/deploy-pages.yml`
+- Trigger: push to `main` or manual workflow dispatch
+- Pipeline in workflow:
+  1. install dependencies
+  2. build dataset
+  3. run integration tests
+  4. export static site
+  5. deploy `dist/static` to GitHub Pages
 
 ## API endpoints
 
@@ -68,47 +103,30 @@ This project is currently implemented with a backend-first approach so the data 
 
 ## Data contract
 
-### Raw input files
+### Raw input
 
 - `data/raw/companies.json`
 - `data/raw/prices.json`
 - `data/raw/conflicts.json`
 
-### Processed output file
+### Processed output
 
 - `data/processed/analytics.json`
 - `data/processed/quality-report.json`
 
-## Import workflow
+## Quality gate
 
-1. Follow schema in `data/import/README.md`.
-2. Add one or more CSV files with columns: `ticker,date,close`.
-3. Run `npm run pipeline`.
-4. Confirm merged output in `data/processed/analytics.json` and warnings in `data/processed/quality-report.json`.
+```bash
+npm run quality:gate
+```
 
-## Quality gate workflow
+Optional env overrides:
 
-1. Build latest report:
+- `MAX_ALLOWED_GAP_DAYS=120`
+- `TARGET_START_DATE=1970-01-01`
+- `ALLOW_COVERAGE_AFTER_TARGET=true`
 
-   ```bash
-   npm run pipeline
-   ```
+## Notes
 
-2. Run quality gate:
-
-   ```bash
-   npm run quality:gate
-   ```
-
-3. Optional threshold overrides:
-   - `MAX_ALLOWED_GAP_DAYS=120`
-   - `TARGET_START_DATE=1970-01-01`
-   - `ALLOW_COVERAGE_AFTER_TARGET=true`
-
-## Current limitation
-
-Seed data is curated sample data for backend validation. It is not yet the full 1970-present production-grade dataset. The pipeline and schema are designed so this can be expanded safely.
-
-## Next phase
-
-After backend design and operations are finalized, we can build the full chart UI and presentation layer on top of these validated endpoints.
+- Static mode is automatic when API calls are unavailable; the UI switches to local exported data mode.
+- For publication-grade claims, Milestone A real-source historical continuity still needs completion.

@@ -15,14 +15,14 @@ Complete the full project end-to-end: robust backend data operations, high-quali
 - Quality report generation implemented
 - API endpoints and integration tests working
 - Milestone log and backend design docs created
+- Milestone C core completed (dashboard)
+- Milestone D core completed (interpretation layer)
+- Milestone E polish completed (visual, responsive, accessibility)
+- Milestone F deployment wrap-up completed (static export + GitHub Pages workflow)
 
 ### Remaining
 
-- Expand real historical dataset quality and continuity
-- Build full frontend dashboard (beyond test harness)
-- Implement rich chart interactions and interpretation layers
-- Add static export mode for GitHub Pages deployment
-- Final QA and public deployment packaging
+- Expand real historical dataset quality and continuity (Milestone A deferred blocker)
 
 ## Delivery Strategy
 
@@ -184,4 +184,4 @@ Ship a fully usable version on free hosting with a reliable maintenance workflow
 
 ## Immediate Next Action
 
-Start Milestone A now by importing broader historical CSV datasets and iterating until `data/processed/quality-report.json` shows acceptable coverage and gap characteristics for all companies.
+Keep Milestone A deferred per blocker log and proceed with release maintenance workflow using current static/API deploy paths.

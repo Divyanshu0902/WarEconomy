@@ -77,7 +77,7 @@ async function handleRequest(req, res) {
 
   if (url.pathname.startsWith("/assets/")) {
     const relPath = url.pathname.replace("/assets/", "");
-    const served = await serveFrontendAsset(res, relPath);
+    const served = await serveFrontendAsset(res, path.posix.join("assets", relPath));
     if (!served) {
       notFound(res);
     }

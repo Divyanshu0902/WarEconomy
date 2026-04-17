@@ -1,5 +1,55 @@
 # Milestone Log
 
+## Milestone F Log Entry (Wrap-Up)
+
+- Date: 2026-04-17
+- Scope: Deployment completion and release packaging
+- Status: Completed (Milestone F core)
+
+## Milestone F Progress
+
+1. Added static export pipeline command:
+   - command: `npm run export:static`
+   - output: `dist/static`
+2. Added static runtime fallback in frontend:
+   - when API is unavailable, UI uses local `data/analytics.json`
+3. Added GitHub Pages CI deployment workflow:
+   - file: `.github/workflows/deploy-pages.yml`
+4. Finalized README deployment and verification instructions.
+5. Added final release notes and checklist in `RELEASE_NOTES.md`.
+
+## Milestone F Verification
+
+1. `npm run pipeline` passed
+2. `npm run test:integration` passed
+3. `npm run export:static` passed
+4. Dashboard route returned `200`
+
+## Milestone E Log Entry (Polish Finalization)
+
+- Date: 2026-04-17
+- Scope: Visual polish, mobile ergonomics, accessibility
+- Status: Completed (Milestone E core)
+
+## Milestone E Progress
+
+1. Final visual identity applied (editorial dark styling, typography hierarchy).
+2. Chart readability improved for dark surfaces and dense overlays.
+3. Mobile ergonomics improved (touch targets, compact controls, responsive legend behavior).
+4. Added loading states and shimmer placeholders across panels.
+5. Accessibility pass completed:
+   - skip link
+   - focus states
+   - aria-live announcements
+   - aria-busy updates
+   - keyboard-friendly control toggles
+
+## Milestone E Verification
+
+1. `GET /` returned `200`
+2. Dashboard interactions remained functional after polish
+3. No frontend file diagnostics errors
+
 ## Milestone D Log Entry (Iteration 1)
 
 - Date: 2026-04-17

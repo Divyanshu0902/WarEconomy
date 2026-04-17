@@ -9,8 +9,11 @@
     "quality": "node backend/src/pipeline/buildDataset.js",
     "quality:gate": "node backend/src/pipeline/qualityGate.js",
     "backfill:synthetic": "node backend/src/pipeline/generateBackfill.js",
+    "export:static": "node backend/src/pipeline/exportStaticSite.js",
     "start:api": "node backend/src/api/server.js",
     "dev": "node backend/src/pipeline/buildDataset.js && node backend/src/api/server.js",
-    "test:integration": "node backend/src/pipeline/buildDataset.js && node backend/src/api/integrationTest.js"
+    "test:integration": "node backend/src/pipeline/buildDataset.js && node backend/src/api/integrationTest.js",
+    "verify:all": "node backend/src/pipeline/buildDataset.js && node backend/src/api/integrationTest.js && node backend/src/pipeline/qualityGate.js && node backend/src/pipeline/exportStaticSite.js",
+    "deploy:prep": "node backend/src/pipeline/buildDataset.js && node backend/src/api/integrationTest.js && node backend/src/pipeline/exportStaticSite.js"
   }
 }

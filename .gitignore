@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# build / export artifacts
+dist/
+data/processed/*.json
+
+# runtime and logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# environment files
+.env
+.env.*
+!.env.example
+
+# editor / OS noise
+.DS_Store
+Thumbs.db
+.vscode/

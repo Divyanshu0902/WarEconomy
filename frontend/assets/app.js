@@ -1,4 +1,10 @@
 const API_BASE = "";
+const STATIC_DATA_PATH_CANDIDATES = [
+  "data/analytics.json",
+  "../data/processed/analytics.json",
+  "/data/processed/analytics.json",
+  "/dist/static/data/analytics.json"
+];
 
 const PRESETS = ["7D", "1M", "6M", "1Y", "5Y", "10Y", "ALL"];
 const COMPANY_COLORS = {
@@ -20,13 +26,370 @@ const state = {
 
 let chart;
 let applyButtonLabel = "Apply Filters";
+let runtimeMode = "api";
+let staticDatasetPromise;
 
 async function fetchJson(path) {
-  const res = await fetch(`${API_BASE}${path}`);
-  if (!res.ok) {
-    throw new Error(`Request failed (${res.status}) for ${path}`);
+  if (runtimeMode === "static") {
+    return queryStaticEndpoint(path);
   }
-  return res.json();
+
+  try {
+    const res = await fetch(`${API_BASE}${path}`);
+    if (!res.ok) {
+      throw new Error(`Request failed (${res.status}) for ${path}`);
+    }
+    return res.json();
+  } catch (error) {
+    if (!path.startsWith("/api/") && path !== "/health") {
+      throw error;
+    }
+    runtimeMode = "static";
+    announce("Switched to static data mode");
+    return queryStaticEndpoint(path);
+  }
+}
+
+async function loadStaticDataset() {
+  if (!staticDatasetPromise) {
+    staticDatasetPromise = loadFirstAvailableStaticDataset();
+  }
+  return staticDatasetPromise;
+}
+
+async function loadFirstAvailableStaticDataset() {
+  let lastError = "";
+
+  for (const path of STATIC_DATA_PATH_CANDIDATES) {
+    try {
+      const res = await fetch(path);
+      if (!res.ok) {
+        lastError = `HTTP ${res.status} at ${path}`;
+        continue;
+      }
+
+      const json = await res.json();
+      return json;
+    } catch (error) {
+      lastError = error?.message || String(error);
+    }
+  }
+
+  throw new Error(
+    `Static dataset missing. Tried: ${STATIC_DATA_PATH_CANDIDATES.join(", ")}. Last error: ${lastError || "unknown"}`
+  );
+}
+
+async function queryStaticEndpoint(path) {
+  const dataset = await loadStaticDataset();
+  const parsed = new URL(path, "https://local.invalid");
+
+  if (parsed.pathname === "/health") {
+    return { ok: true, generatedAt: dataset.metadata?.generatedAt || null, mode: "static" };
+  }
+
+  if (parsed.pathname === "/api/metadata") {
+    return {
+      ...dataset.metadata,
+      runtimeMode: "static"
+    };
+  }
+
+  if (parsed.pathname === "/api/conflicts") {
+    const region = parsed.searchParams.get("region");
+    const usInvolvement = parsed.searchParams.get("usInvolvement");
+    const conflicts = filterConflictsStatic(dataset, { region, usInvolvement });
+    return { total: conflicts.length, conflicts };
+  }
+
+  if (parsed.pathname === "/api/analytics") {
+    const ticker = parsed.searchParams.get("ticker");
+    const company = getCompanyCorrelationStatic(dataset, ticker || "");
+    if (!company) {
+      throw new Error(`Company not found for ticker ${ticker || "n/a"}`);
+    }
+    return company;
+  }
+
+  if (parsed.pathname === "/api/analytics/summary") {
+    const ticker = parsed.searchParams.get("ticker");
+    const summary = summarizeByInvolvementStatic(dataset, ticker || "");
+    if (!summary) {
+      throw new Error(`Company not found for ticker ${ticker || "n/a"}`);
+    }
+    return summary;
+  }
+
+  if (parsed.pathname === "/api/timeseries") {
+    const tickersRaw = parsed.searchParams.get("tickers") || "";
+    const tickers = tickersRaw.split(",").map((t) => t.trim()).filter(Boolean);
+    const series = getTimeSeriesStatic(dataset, {
+      tickers,
+      startDate: parsed.searchParams.get("startDate") || undefined,
+      endDate: parsed.searchParams.get("endDate") || undefined,
+      granularity: (parsed.searchParams.get("granularity") || "day").toLowerCase(),
+      mode: (parsed.searchParams.get("mode") || "absolute").toLowerCase()
+    });
+    return { total: series.length, series };
+  }
+
+  if (parsed.pathname === "/api/insights") {
+    const ticker = parsed.searchParams.get("ticker") || "";
+    const limit = Number(parsed.searchParams.get("limit") || 6);
+    const insights = getInsightsStatic(dataset, {
+      ticker,
+      region: parsed.searchParams.get("region") || undefined,
+      usInvolvement: parsed.searchParams.get("usInvolvement") || undefined,
+      limit
+    });
+    if (!insights) {
+      throw new Error(`Company not found for ticker ${ticker || "n/a"}`);
+    }
+    return insights;
+  }
+
+  throw new Error(`Unsupported static endpoint: ${parsed.pathname}`);
+}
+
+function filterConflictsStatic(dataset, { region, usInvolvement }) {
+  return dataset.conflicts.filter((conflict) => {
+    const regionMatch = region ? conflict.region.toLowerCase() === region.toLowerCase() : true;
+    const involvementMatch = usInvolvement
+      ? conflict.usInvolvement.toLowerCase() === usInvolvement.toLowerCase()
+      : true;
+    return regionMatch && involvementMatch;
+  });
+}
+
+function getCompanyCorrelationStatic(dataset, ticker) {
+  return dataset.analytics.find((company) => company.ticker.toLowerCase() === ticker.toLowerCase()) || null;
+}
+
+function summarizeByInvolvementStatic(dataset, ticker) {
+  const company = getCompanyCorrelationStatic(dataset, ticker);
+  if (!company) {
+    return null;
+  }
+
+  const buckets = new Map();
+  for (const row of company.conflictAnalytics) {
+    if (!buckets.has(row.usInvolvement)) {
+      buckets.set(row.usInvolvement, []);
+    }
+    buckets.get(row.usInvolvement).push(row.conflictPeriodPct);
+  }
+
+  return {
+    ticker: company.ticker,
+    name: company.name,
+    groupedReturns: [...buckets.entries()].map(([usInvolvement, values]) => ({
+      usInvolvement,
+      averageConflictPeriodPct: averageStatic(values),
+      sampleSize: values.length
+    }))
+  };
+}
+
+function getTimeSeriesStatic(dataset, options) {
+  const {
+    tickers = [],
+    startDate,
+    endDate,
+    granularity = "day",
+    mode = "absolute"
+  } = options;
+
+  const normalizedTickers = tickers.map((t) => t.toUpperCase());
+  const selected = dataset.priceSeries.filter((row) => normalizedTickers.includes(row.ticker.toUpperCase()));
+
+  return selected.map((series) => {
+    let points = series.points;
+    if (startDate) {
+      points = points.filter((p) => p.date >= startDate);
+    }
+    if (endDate) {
+      points = points.filter((p) => p.date <= endDate);
+    }
+
+    points = aggregatePointsStatic(points, granularity);
+    points = mode === "indexed" ? toIndexedStatic(points) : points;
+
+    return {
+      ticker: series.ticker,
+      points
+    };
+  });
+}
+
+function getInsightsStatic(dataset, options) {
+  const { ticker, region, usInvolvement, limit = 6 } = options;
+  const company = getCompanyCorrelationStatic(dataset, ticker);
+  if (!company) {
+    return null;
+  }
+
+  let rows = company.conflictAnalytics;
+  if (region) {
+    rows = rows.filter((r) => r.region.toLowerCase() === region.toLowerCase());
+  }
+  if (usInvolvement) {
+    rows = rows.filter((r) => r.usInvolvement.toLowerCase() === usInvolvement.toLowerCase());
+  }
+
+  const top = [...rows]
+    .filter((r) => Number.isFinite(r.conflictPeriodPct))
+    .sort((a, b) => Math.abs(b.conflictPeriodPct) - Math.abs(a.conflictPeriodPct))
+    .slice(0, Math.max(1, limit));
+
+  const cards = top.map((r) => {
+    const start = getStageMetricStatic(r, "start");
+    const end = getStageMetricStatic(r, "end");
+    const progression = r.stageMetrics.filter((s) => s.stage === "progression");
+
+    return {
+      conflictId: r.conflictId,
+      conflictName: r.conflictName,
+      region: r.region,
+      usInvolvement: r.usInvolvement,
+      conflictPeriodPct: r.conflictPeriodPct,
+      interpretation: buildInterpretationStatic(r),
+      stageSummary: {
+        start: summarizeStageStatic(start),
+        progressionAverageStageToPostPct: r.progressionAverageStageToPostPct,
+        progressionMilestones: progression.length,
+        end: summarizeStageStatic(end)
+      }
+    };
+  });
+
+  return {
+    ticker: company.ticker,
+    companyName: company.name,
+    totalConflictsConsidered: rows.length,
+    cards,
+    comparison: buildDirectIndirectComparisonStatic(company.conflictAnalytics)
+  };
+}
+
+function aggregatePointsStatic(points, granularity) {
+  if (granularity === "day") {
+    return points;
+  }
+
+  const buckets = new Map();
+  for (const p of points) {
+    const key = bucketKeyStatic(p.date, granularity);
+    buckets.set(key, p);
+  }
+
+  return [...buckets.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function bucketKeyStatic(dateStr, granularity) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+
+  if (granularity === "week") {
+    const week = getWeekNumberStatic(d);
+    return `${y}-W${String(week).padStart(2, "0")}`;
+  }
+  if (granularity === "month") {
+    return `${y}-${m}`;
+  }
+  if (granularity === "year") {
+    return String(y);
+  }
+  if (granularity === "decade") {
+    return `${Math.floor(y / 10) * 10}s`;
+  }
+  return dateStr;
+}
+
+function getWeekNumberStatic(d) {
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+function toIndexedStatic(points) {
+  if (!points.length) {
+    return points;
+  }
+  const base = points[0].close;
+  if (!base) {
+    return points;
+  }
+  return points.map((p) => ({
+    ...p,
+    close: (p.close / base) * 100
+  }));
+}
+
+function getStageMetricStatic(row, stage) {
+  return row.stageMetrics.find((m) => m.stage === stage) || null;
+}
+
+function summarizeStageStatic(metric) {
+  if (!metric) {
+    return null;
+  }
+  return {
+    date: metric.date,
+    preToStagePct: metric.preToStagePct,
+    stageToPostPct: metric.stageToPostPct,
+    preToPostPct: metric.preToPostPct
+  };
+}
+
+function buildInterpretationStatic(row) {
+  const pct = row.conflictPeriodPct;
+  if (!Number.isFinite(pct)) {
+    return "Insufficient data to estimate conflict-window return for this selection.";
+  }
+  if (pct >= 20) {
+    return "Conflict window shows strong positive movement; interpret alongside broader market context and procurement cycles.";
+  }
+  if (pct >= 5) {
+    return "Conflict window shows moderate positive movement; potential alignment is visible but not causal proof.";
+  }
+  if (pct > -5) {
+    return "Conflict window appears near-flat; alignment signals are weak in this period.";
+  }
+  return "Conflict window shows negative movement; conflict timing alone does not explain performance.";
+}
+
+function buildDirectIndirectComparisonStatic(rows) {
+  const buckets = { direct: [], indirect: [] };
+  for (const r of rows) {
+    if (r.usInvolvement === "direct") {
+      buckets.direct.push(r.conflictPeriodPct);
+    }
+    if (r.usInvolvement === "indirect") {
+      buckets.indirect.push(r.conflictPeriodPct);
+    }
+  }
+
+  return {
+    direct: {
+      sampleSize: buckets.direct.length,
+      averageConflictPeriodPct: averageStatic(buckets.direct)
+    },
+    indirect: {
+      sampleSize: buckets.indirect.length,
+      averageConflictPeriodPct: averageStatic(buckets.indirect)
+    }
+  };
+}
+
+function averageStatic(values) {
+  const nums = values.filter((v) => typeof v === "number" && Number.isFinite(v));
+  if (!nums.length) {
+    return null;
+  }
+  return nums.reduce((acc, n) => acc + n, 0) / nums.length;
 }
 
 function show(id, payload) {
@@ -66,7 +429,8 @@ async function init() {
 
   show("snapshot", {
     metadata: base,
-    note: "Use controls and Apply Filters to refresh chart and correlation snapshots."
+    note: "Use controls and Apply Filters to refresh chart and correlation snapshots.",
+    runtimeMode
   });
   renderProvenance(base);
 
@@ -78,10 +442,22 @@ async function init() {
 function setLoading(isLoading) {
   const chartEl = document.getElementById("chart");
   const applyBtn = document.getElementById("applyBtn");
+  const loadingRegions = [
+    document.getElementById("insightCards"),
+    document.getElementById("comparison"),
+    document.getElementById("provenance"),
+    document.getElementById("snapshot"),
+    document.getElementById("legend")
+  ].filter(Boolean);
 
   document.body.classList.toggle("is-loading", isLoading);
   if (chartEl) {
     chartEl.classList.toggle("shimmer", isLoading);
+    chartEl.setAttribute("aria-busy", String(isLoading));
+  }
+
+  for (const region of loadingRegions) {
+    region.setAttribute("aria-busy", String(isLoading));
   }
 
   if (applyBtn) {
@@ -241,6 +617,30 @@ function renderLegend(conflicts) {
   }
 }
 
+function renderActiveFilters({ tickers, mode, granularity, startDate, endDate, involvement, region }) {
+  const root = document.getElementById("activeFilters");
+  if (!root) {
+    return;
+  }
+
+  const pills = [
+    `Companies ${tickers.join("/")}`,
+    `Mode ${mode}`,
+    `Grain ${granularity}`,
+    `Range ${startDate} to ${endDate}`,
+    `US ${involvement || "all"}`,
+    `Region ${region || "all"}`
+  ];
+
+  root.innerHTML = "";
+  for (const text of pills) {
+    const pill = document.createElement("span");
+    pill.className = "active-filter-pill";
+    pill.textContent = text;
+    root.appendChild(pill);
+  }
+}
+
 async function refreshDashboard() {
   const tickers = [...state.selectedTickers];
   if (tickers.length === 0) {
@@ -278,6 +678,7 @@ async function refreshDashboard() {
 
     state.conflicts = conflictsRes.conflicts || [];
     renderLegend(state.conflicts);
+    renderActiveFilters({ tickers, mode, granularity, startDate, endDate, involvement, region });
     renderChart(seriesRes.series || [], state.conflicts, { mode });
     renderInsightCards(insightsRes.cards || []);
     renderComparison(insightsRes.comparison || null);
@@ -289,7 +690,8 @@ async function refreshDashboard() {
       range: { startDate, endDate },
       conflictCount: state.conflicts.length,
       summaryForPrimaryTicker: summaryRes,
-      insightCardCount: (insightsRes.cards || []).length
+      insightCardCount: (insightsRes.cards || []).length,
+      runtimeMode
     });
   } finally {
     setLoading(false);

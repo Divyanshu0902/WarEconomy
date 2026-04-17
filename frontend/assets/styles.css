@@ -210,6 +210,25 @@ body::before {
   color: var(--paper);
 }
 
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.36rem;
+  margin: -0.2rem 0 0.75rem;
+}
+
+.active-filter-pill {
+  border: 1px solid rgba(201, 147, 58, 0.28);
+  background: rgba(201, 147, 58, 0.08);
+  color: var(--gold-light);
+  border-radius: 0;
+  padding: 0.18rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
 .controls label {
   display: block;
   margin: 0.72rem 0 0.34rem;
@@ -365,6 +384,39 @@ body::before {
   position: absolute;
   inset: 0;
   background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%);
+  animation: shimmer 2.5s infinite;
+  pointer-events: none;
+}
+
+body.is-loading #insightCards,
+body.is-loading #comparison,
+body.is-loading #provenance,
+body.is-loading #snapshot,
+body.is-loading #legend {
+  position: relative;
+  overflow: hidden;
+}
+
+body.is-loading #insightCards > *,
+body.is-loading #comparison > *,
+body.is-loading #provenance > *,
+body.is-loading #legend > * {
+  opacity: 0.3;
+}
+
+body.is-loading #snapshot {
+  color: transparent;
+}
+
+body.is-loading #insightCards::after,
+body.is-loading #comparison::after,
+body.is-loading #provenance::after,
+body.is-loading #snapshot::after,
+body.is-loading #legend::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.045) 50%, transparent 100%);
   animation: shimmer 2.5s infinite;
   pointer-events: none;
 }
@@ -653,6 +705,15 @@ body::before {
   .preset,
   .primary {
     font-size: 0.72rem;
+  }
+
+  .active-filters {
+    margin-bottom: 0.6rem;
+  }
+
+  .active-filter-pill {
+    font-size: 0.55rem;
+    letter-spacing: 0.09em;
   }
 
   .legend-toolbar {
