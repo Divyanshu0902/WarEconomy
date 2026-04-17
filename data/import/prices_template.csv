@@ -1,0 +1,7 @@
+ticker,date,close,source,currency
+LMT,1985-01-02,7.83,stooq,USD
+LMT,1985-01-03,7.75,stooq,USD
+RTX,1985-01-02,4.12,stooq,USD
+NOC,1985-01-02,5.37,stooq,USD
+GD,1985-01-02,3.98,stooq,USD
+HII,1985-01-02,2.14,stooq,USD

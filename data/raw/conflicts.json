@@ -1,0 +1,55 @@
+[
+  {
+    "id": "k_gulf_war",
+    "name": "Gulf War",
+    "region": "Middle East",
+    "usInvolvement": "direct",
+    "startDate": "1990-08-02",
+    "endDate": "1991-02-28",
+    "milestones": [
+      { "stage": "start", "date": "1990-08-02", "label": "Iraq invades Kuwait" },
+      { "stage": "progression", "date": "1991-01-17", "label": "Operation Desert Storm begins" },
+      { "stage": "end", "date": "1991-02-28", "label": "Coalition ceasefire" }
+    ]
+  },
+  {
+    "id": "k_afghanistan",
+    "name": "War in Afghanistan",
+    "region": "South Asia",
+    "usInvolvement": "direct",
+    "startDate": "2001-10-07",
+    "endDate": "2021-08-30",
+    "milestones": [
+      { "stage": "start", "date": "2001-10-07", "label": "Operation Enduring Freedom begins" },
+      { "stage": "progression", "date": "2009-12-01", "label": "US troop surge period" },
+      { "stage": "progression", "date": "2014-12-28", "label": "NATO combat mission formally ends" },
+      { "stage": "end", "date": "2021-08-30", "label": "US withdrawal completed" }
+    ]
+  },
+  {
+    "id": "k_iraq_war",
+    "name": "Iraq War",
+    "region": "Middle East",
+    "usInvolvement": "direct",
+    "startDate": "2003-03-20",
+    "endDate": "2011-12-18",
+    "milestones": [
+      { "stage": "start", "date": "2003-03-20", "label": "Invasion of Iraq" },
+      { "stage": "progression", "date": "2007-01-10", "label": "US troop surge announced" },
+      { "stage": "end", "date": "2011-12-18", "label": "Final US troops withdraw" }
+    ]
+  },
+  {
+    "id": "k_ukraine_2022",
+    "name": "Russia-Ukraine War (2022-)",
+    "region": "Europe",
+    "usInvolvement": "indirect",
+    "startDate": "2022-02-24",
+    "endDate": null,
+    "milestones": [
+      { "stage": "start", "date": "2022-02-24", "label": "Full-scale invasion begins" },
+      { "stage": "progression", "date": "2022-03-16", "label": "US aid expansion phase" },
+      { "stage": "progression", "date": "2023-06-01", "label": "Extended artillery and air-defense support" }
+    ]
+  }
+]

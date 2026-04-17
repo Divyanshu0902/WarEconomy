@@ -1,0 +1,7 @@
+[
+  { "id": "c_lmt", "ticker": "LMT", "name": "Lockheed Martin", "sector": "Aerospace & Defense" },
+  { "id": "c_rtx", "ticker": "RTX", "name": "RTX Corporation", "sector": "Aerospace & Defense" },
+  { "id": "c_noc", "ticker": "NOC", "name": "Northrop Grumman", "sector": "Aerospace & Defense" },
+  { "id": "c_gd", "ticker": "GD", "name": "General Dynamics", "sector": "Aerospace & Defense" },
+  { "id": "c_hii", "ticker": "HII", "name": "Huntington Ingalls Industries", "sector": "Shipbuilding & Defense" }
+]

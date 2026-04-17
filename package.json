@@ -1,0 +1,16 @@
+{
+  "name": "war-economy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Backend-first war economy correlation dashboard",
+  "type": "module",
+  "scripts": {
+    "pipeline": "node backend/src/pipeline/buildDataset.js",
+    "quality": "node backend/src/pipeline/buildDataset.js",
+    "quality:gate": "node backend/src/pipeline/qualityGate.js",
+    "backfill:synthetic": "node backend/src/pipeline/generateBackfill.js",
+    "start:api": "node backend/src/api/server.js",
+    "dev": "node backend/src/pipeline/buildDataset.js && node backend/src/api/server.js",
+    "test:integration": "node backend/src/pipeline/buildDataset.js && node backend/src/api/integrationTest.js"
+  }
+}
