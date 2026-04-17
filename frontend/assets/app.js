@@ -14,7 +14,8 @@ const state = {
   selectedTickers: new Set(),
   conflicts: [],
   preset: "10Y",
-  metadata: null
+  metadata: null,
+  legendExpanded: false
 };
 
 let chart;
@@ -30,6 +31,17 @@ async function fetchJson(path) {
 
 function show(id, payload) {
   document.getElementById(id).textContent = JSON.stringify(payload, null, 2);
+}
+
+function announce(message) {
+  const live = document.getElementById("liveStatus");
+  if (!live) {
+    return;
+  }
+  live.textContent = "";
+  window.requestAnimationFrame(() => {
+    live.textContent = message;
+  });
 }
 
 async function init() {
@@ -76,6 +88,8 @@ function setLoading(isLoading) {
     applyBtn.disabled = isLoading;
     applyBtn.textContent = isLoading ? "Loading..." : applyButtonLabel;
   }
+
+  announce(isLoading ? "Loading updated dashboard data" : "Dashboard update complete");
 }
 
 function wireEvents() {
@@ -83,7 +97,17 @@ function wireEvents() {
     refreshDashboard().catch((err) => showError(err));
   });
 
+  const legendToggle = document.getElementById("legendToggle");
+  if (legendToggle) {
+    legendToggle.addEventListener("click", () => {
+      state.legendExpanded = !state.legendExpanded;
+      renderLegend(state.conflicts);
+      announce(state.legendExpanded ? "Expanded legend items" : "Collapsed legend items");
+    });
+  }
+
   window.addEventListener("resize", () => {
+    renderLegend(state.conflicts);
     if (chart) {
       chart.resize();
     }
@@ -96,8 +120,11 @@ function renderCompanyChips() {
 
   for (const ticker of state.companies) {
     const chip = document.createElement("button");
+    chip.type = "button";
     chip.className = `chip ${state.selectedTickers.has(ticker) ? "active" : ""}`;
     chip.textContent = ticker;
+    chip.setAttribute("aria-pressed", String(state.selectedTickers.has(ticker)));
+    chip.setAttribute("aria-label", `Toggle company ${ticker}`);
     chip.addEventListener("click", () => {
       if (state.selectedTickers.has(ticker)) {
         state.selectedTickers.delete(ticker);
@@ -105,6 +132,7 @@ function renderCompanyChips() {
         state.selectedTickers.add(ticker);
       }
       renderCompanyChips();
+      announce(`Selected companies: ${[...state.selectedTickers].join(", ") || "none"}`);
     });
     el.appendChild(chip);
   }
@@ -116,8 +144,11 @@ function renderPresetButtons() {
 
   for (const p of PRESETS) {
     const btn = document.createElement("button");
+    btn.type = "button";
     btn.className = `preset ${p === state.preset ? "active" : ""}`;
     btn.textContent = p;
+    btn.setAttribute("aria-pressed", String(p === state.preset));
+    btn.setAttribute("aria-label", `Set time preset ${p}`);
     btn.addEventListener("click", () => {
       applyPreset(p);
       refreshDashboard().catch((err) => showError(err));
@@ -162,11 +193,48 @@ function fillRegionFilter(conflicts) {
 
 function renderLegend(conflicts) {
   const legend = document.getElementById("legend");
+  const summary = document.getElementById("legendSummary");
+  const toggle = document.getElementById("legendToggle");
   legend.innerHTML = "";
 
-  for (const c of conflicts.slice(0, 10)) {
+  if (summary) {
+    summary.innerHTML = "";
+    const total = conflicts.length;
+    const directCount = conflicts.filter((c) => c.usInvolvement === "direct").length;
+    const indirectCount = conflicts.filter((c) => c.usInvolvement === "indirect").length;
+    const chips = [
+      `Total ${total}`,
+      `Direct ${directCount}`,
+      `Indirect ${indirectCount}`
+    ];
+
+    for (const text of chips) {
+      const chip = document.createElement("span");
+      chip.className = "legend-summary-chip";
+      chip.textContent = text;
+      summary.appendChild(chip);
+    }
+  }
+
+  const collapseLimit = window.innerWidth <= 760 ? 5 : 8;
+  const needsToggle = conflicts.length > collapseLimit;
+
+  if (toggle) {
+    toggle.style.display = needsToggle ? "inline-flex" : "none";
+    toggle.textContent = state.legendExpanded ? "Show Fewer" : "Show More";
+    toggle.setAttribute("aria-expanded", String(state.legendExpanded));
+  }
+
+  for (const [index, c] of conflicts.entries()) {
     const item = document.createElement("div");
     item.className = "legend-item";
+    if (needsToggle && index >= collapseLimit) {
+      item.classList.add("extra");
+      if (state.legendExpanded) {
+        item.classList.add("show");
+      }
+    }
+
     const end = c.endDate || "ongoing";
     item.textContent = `${c.name} | ${c.usInvolvement} | ${c.startDate} -> ${end}`;
     legend.appendChild(item);
@@ -336,6 +404,7 @@ function renderChart(seriesRows, conflicts, options) {
 
 function showError(err) {
   show("snapshot", { error: err.message || String(err) });
+  announce(`Error: ${err.message || String(err)}`);
 }
 
 function renderInsightCards(cards) {

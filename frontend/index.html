@@ -11,7 +11,10 @@
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 </head>
 <body>
-  <main class="page">
+  <a class="skip-link" href="#mainContent">Skip to dashboard content</a>
+  <div id="liveStatus" class="sr-only" role="status" aria-live="polite"></div>
+
+  <main id="mainContent" class="page">
     <header class="hero">
       <span class="eyebrow hero-eyebrow">Conflict Intelligence</span>
       <h1 class="hero-headline">War Economy <em>Correlation</em> Dashboard</h1>
@@ -23,16 +26,16 @@
         <span class="eyebrow">Control Deck</span>
         <h2>Controls</h2>
 
-        <label>Companies</label>
+        <label id="companiesLabel">Companies</label>
         <div id="companyList" class="chip-list"></div>
 
-        <label>Mode</label>
+        <label for="mode">Mode</label>
         <select id="mode">
           <option value="absolute">Absolute Price</option>
           <option value="indexed">Indexed (Base=100)</option>
         </select>
 
-        <label>Granularity</label>
+        <label for="granularity">Granularity</label>
         <select id="granularity">
           <option value="day">Day</option>
           <option value="week">Week</option>
@@ -41,16 +44,16 @@
           <option value="decade">Decade</option>
         </select>
 
-        <label>Time Preset</label>
+        <label id="presetLabel">Time Preset</label>
         <div id="presets" class="preset-grid"></div>
 
-        <label>Custom Start</label>
+        <label for="startDate">Custom Start</label>
         <input type="date" id="startDate" />
 
-        <label>Custom End</label>
+        <label for="endDate">Custom End</label>
         <input type="date" id="endDate" />
 
-        <label>US Involvement</label>
+        <label for="involvement">US Involvement</label>
         <select id="involvement">
           <option value="">All</option>
           <option value="direct">Direct</option>
@@ -60,7 +63,7 @@
           <option value="proxy">Proxy</option>
         </select>
 
-        <label>Region</label>
+        <label for="region">Region</label>
         <select id="region">
           <option value="">All</option>
         </select>
@@ -71,7 +74,7 @@
       <section class="panel chart-panel">
         <span class="eyebrow">Timeline View</span>
         <h2>Timeline Correlation</h2>
-        <div id="chart" class="chart"></div>
+        <div id="chart" class="chart" role="img" aria-label="Time series chart for selected defense companies with conflict overlays"></div>
       </section>
     </section>
 
@@ -79,6 +82,10 @@
       <section class="panel">
         <span class="eyebrow">Overlay Key</span>
         <h2>Conflict Overlay Legend</h2>
+        <div class="legend-toolbar">
+          <div id="legendSummary" class="legend-summary" aria-live="polite"></div>
+          <button id="legendToggle" class="legend-toggle" type="button" aria-expanded="false">Show More</button>
+        </div>
         <div id="legend"></div>
       </section>
 
