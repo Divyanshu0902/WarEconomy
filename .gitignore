@@ -20,3 +20,11 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 .vscode/
+
+#docs
+PLAN.md
+PROJECT_COMPLETION_PLAN.md
+BACKEND_DESIGN.md
+AI-Reader-Design-Prompt.md
+MILESTONE_A_BLOCKER_LOG.md
+MILESTONE_LOG.md
